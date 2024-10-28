@@ -1,0 +1,304 @@
+// --- BitcoinExchange.hpp ---
+#ifndef BITCOINEXCHANGE_HPP
+#define BITCOINEXCHANGE_HPP
+
+#include <iostream>
+#include <map>
+#include <string>
+#include <fstream>
+#include <sstream>
+#include <stdexcept>
+
+class BitcoinExchange {
+private:
+    std::map<std::string, float> _exchangeRates;
+
+public:
+    BitcoinExchange(const std::string& dbFile);
+    ~BitcoinExchange();
+
+    void evaluate(const std::string& inputFile);
+
+private:
+    void loadDatabase(const std::string& dbFile);
+    float getExchangeRate(const std::string& date) const;
+};
+
+#endif
+
+// --- BitcoinExchange.cpp ---
+#include "BitcoinExchange.hpp"
+
+BitcoinExchange::BitcoinExchange(const std::string& dbFile) {
+    loadDatabase(dbFile);
+}
+
+BitcoinExchange::~BitcoinExchange() {}
+
+void BitcoinExchange::loadDatabase(const std::string& dbFile) {
+    std::ifstream file(dbFile);
+    if (!file.is_open()) {
+        throw std::runtime_error("Error: could not open database file.");
+    }
+    std::string line;
+    while (std::getline(file, line)) {
+        std::istringstream iss(line);
+        std::string date;
+        float rate;
+        if (iss >> date >> rate) {
+            _exchangeRates[date] = rate;
+        }
+    }
+    file.close();
+}
+
+float BitcoinExchange::getExchangeRate(const std::string& date) const {
+    auto it = _exchangeRates.lower_bound(date);
+    if (it == _exchangeRates.end() || (it != _exchangeRates.begin() && it->first != date)) {
+        --it;
+    }
+    return it->second;
+}
+
+void BitcoinExchange::evaluate(const std::string& inputFile) {
+    std::ifstream file(inputFile);
+    if (!file.is_open()) {
+        std::cerr << "Error: could not open file." << std::endl;
+        return;
+    }
+    std::string line;
+    while (std::getline(file, line)) {
+        std::istringstream iss(line);
+        std::string date;
+        float value;
+        if (iss >> date >> value) {
+            if (value < 0 || value > 1000) {
+                std::cerr << "Error: value out of range." << std::endl;
+                continue;
+            }
+            try {
+                float rate = getExchangeRate(date);
+                std::cout << date << " => " << value << " = " << value * rate << std::endl;
+            } catch (const std::exception& e) {
+                std::cerr << e.what() << std::endl;
+            }
+        } else {
+            std::cerr << "Error: bad input => " << line << std::endl;
+        }
+    }
+    file.close();
+}
+
+// --- main for ex00 ---
+int main(int argc, char* argv[]) {
+    if (argc != 2) {
+        std::cerr << "Usage: ./btc <input_file>" << std::endl;
+        return 1;
+    }
+
+    try {
+        BitcoinExchange btc("bitcoin_db.csv");
+        btc.evaluate(argv[1]);
+    } catch (const std::exception& e) {
+        std::cerr << e.what() << std::endl;
+        return 1;
+    }
+
+    return 0;
+}
+
+// --- RPN.hpp ---
+#ifndef RPN_HPP
+#define RPN_HPP
+
+#include <iostream>
+#include <stack>
+#include <string>
+#include <sstream>
+#include <stdexcept>
+
+class RPN {
+public:
+    RPN();
+    ~RPN();
+    int evaluate(const std::string& expression);
+
+private:
+    bool isOperator(const std::string& token) const;
+    int performOperation(int operand1, int operand2, const std::string& op) const;
+};
+
+#endif
+
+// --- RPN.cpp ---
+#include "RPN.hpp"
+
+RPN::RPN() {}
+
+RPN::~RPN() {}
+
+int RPN::evaluate(const std::string& expression) {
+    std::istringstream iss(expression);
+    std::stack<int> stack;
+    std::string token;
+
+    while (iss >> token) {
+        if (isOperator(token)) {
+            if (stack.size() < 2) {
+                throw std::runtime_error("Error: insufficient values for operation.");
+            }
+            int operand2 = stack.top(); stack.pop();
+            int operand1 = stack.top(); stack.pop();
+            int result = performOperation(operand1, operand2, token);
+            stack.push(result);
+        } else {
+            stack.push(std::stoi(token));
+        }
+    }
+
+    if (stack.size() != 1) {
+        throw std::runtime_error("Error: invalid RPN expression.");
+    }
+
+    return stack.top();
+}
+
+bool RPN::isOperator(const std::string& token) const {
+    return token == "+" || token == "-" || token == "*" || token == "/";
+}
+
+int RPN::performOperation(int operand1, int operand2, const std::string& op) const {
+    if (op == "+") {
+        return operand1 + operand2;
+    } else if (op == "-") {
+        return operand1 - operand2;
+    } else if (op == "*") {
+        return operand1 * operand2;
+    } else if (op == "/") {
+        if (operand2 == 0) {
+            throw std::runtime_error("Error: division by zero.");
+        }
+        return operand1 / operand2;
+    } else {
+        throw std::runtime_error("Error: unknown operator.");
+    }
+}
+
+// --- main for ex01 ---
+int main(int argc, char* argv[]) {
+    if (argc != 2) {
+        std::cerr << "Usage: ./RPN <expression>" << std::endl;
+        return 1;
+    }
+
+    try {
+        RPN rpn;
+        int result = rpn.evaluate(argv[1]);
+        std::cout << "Result: " << result << std::endl;
+    } catch (const std::exception& e) {
+        std::cerr << e.what() << std::endl;
+        return 1;
+    }
+
+    return 0;
+}
+
+// --- PmergeMe.hpp ---
+#ifndef PMERGEME_HPP
+#define PMERGEME_HPP
+
+#include <iostream>
+#include <vector>
+#include <list>
+#include <algorithm>
+#include <chrono>
+
+class PmergeMe {
+public:
+    PmergeMe();
+    ~PmergeMe();
+
+    void sortSequence(const std::vector<int>& sequence);
+
+private:
+    void mergeInsertSort(std::vector<int>& vec);
+    void mergeInsertSort(std::list<int>& lst);
+};
+
+#endif
+
+// --- PmergeMe.cpp ---
+#include "PmergeMe.hpp"
+
+PmergeMe::PmergeMe() {}
+
+PmergeMe::~PmergeMe() {}
+
+void PmergeMe::sortSequence(const std::vector<int>& sequence) {
+    std::vector<int> vec(sequence);
+    std::list<int> lst(sequence.begin(), sequence.end());
+
+    auto startVec = std::chrono::high_resolution_clock::now();
+    mergeInsertSort(vec);
+    auto endVec = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> elapsedVec = endVec - startVec;
+
+    auto startLst = std::chrono::high_resolution_clock::now();
+    mergeInsertSort(lst);
+    auto endLst = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> elapsedLst = endLst - startLst;
+
+    std::cout << "Before: ";
+    for (int num : sequence) {
+        std::cout << num << " ";
+    }
+    std::cout << std::endl;
+
+    std::cout << "After: ";
+    for (int num : vec) {
+        std::cout << num << " ";
+    }
+    std::cout << std::endl;
+
+    std::cout << "Time to process a range of " << sequence.size() << " elements with std::vector: " << elapsedVec.count() << "s" << std::endl;
+    std::cout << "Time to process a range of " << sequence.size() << " elements with std::list: " << elapsedLst.count() << "s" << std::endl;
+}
+
+void PmergeMe::mergeInsertSort(std::vector<int>& vec) {
+    if (vec.size() <= 1) return;
+    std::sort(vec.begin(), vec.end());
+}
+
+void PmergeMe::mergeInsertSort(std::list<int>& lst) {
+    if (lst.size() <= 1) return;
+    lst.sort();
+}
+
+// --- main for ex02 ---
+int main(int argc, char* argv[]) {
+    if (argc < 2) {
+        std::cerr << "Usage: ./PmergeMe <sequence of positive integers>" << std::endl;
+        return 1;
+    }
+
+    std::vector<int> sequence;
+    for (int i = 1; i < argc; ++i) {
+        int num;
+        std::istringstream iss(argv[i]);
+        if (!(iss >> num) || num < 0) {
+            std::cerr << "Error: invalid input " << argv[i] << std::endl;
+            return 1;
+        }
+        sequence.push_back(num);
+    }
+
+    try {
+        PmergeMe pmerge;
+        pmerge.sortSequence(sequence);
+    } catch (const std::exception& e) {
+        std::cerr << e.what() << std::endl;
+        return 1;
+    }
+
+    return 0;
+}
