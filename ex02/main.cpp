@@ -1,27 +1,33 @@
 #include "PmergeMe.hpp"
 
-int main(int argc, char* argv[]) {
-    if (argc < 2) {
-        std::cerr << "Usage: ./PmergeMe <sequence of positive integers>" << std::endl;
+int main(int argc, char** argv) {
+    if (argc != 2) {
+        std::cerr << "Usage: ./pmergeme \"<numbers separated by spaces>\"\n";
         return 1;
     }
 
-    std::vector<int> sequence;
-    for (int i = 1; i < argc; ++i) {
-        int num;
-        std::istringstream iss(argv[i]);
-        if (!(iss >> num) || num < 0) {
-            std::cerr << "Error: invalid input " << argv[i] << std::endl;
-            return 1;
-        }
-        sequence.push_back(num);
-    }
-
     try {
-        PmergeMe pmerge;
-        pmerge.sortSequence(sequence);
+        PmergeMe sorter;
+        sorter.loadData(argv[1]);
+        std::cout << "Sorting data...\n";
+        sorter.sortData();
+
+        std::cout << "Sorted Vector: ";
+        const std::vector<int>& vecData = sorter.getVectorData();
+        for (std::vector<int>::const_iterator it = vecData.begin(); it != vecData.end(); ++it) {
+            std::cout << *it << " ";
+        }
+        std::cout << "\n";
+
+        std::cout << "Sorted Deque: ";
+        const std::deque<int>& deqData = sorter.getDequeData();
+        for (std::deque<int>::const_iterator it = deqData.begin(); it != deqData.end(); ++it) {
+            std::cout << *it << " ";
+        }
+        std::cout << "\n";
+
     } catch (const std::exception& e) {
-        std::cerr << e.what() << std::endl;
+        std::cerr << "Error: " << e.what() << "\n";
         return 1;
     }
 

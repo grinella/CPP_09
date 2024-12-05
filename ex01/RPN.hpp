@@ -1,18 +1,26 @@
-#pragma once
+#ifndef RPN_HPP
+#define RPN_HPP
 
-#include <iostream>
-#include <stack>
 #include <string>
-#include <sstream>
+#include <stack>
 #include <stdexcept>
+#include <sstream>
+#include <iostream>
 
 class RPN {
 public:
-    RPN();
-    ~RPN();
-    int evaluate(const std::string& expression);
+    RPN();                               // Costruttore di default
+    RPN(const RPN &other);               // Costruttore di copia
+    RPN &operator=(const RPN &other);    // Operatore di assegnazione
+    ~RPN();                              // Distruttore
+
+    int evaluate(const std::string &expression);
 
 private:
-    bool isOperator(const std::string& token) const;
-    int performOperation(int operand1, int operand2, const std::string& op) const;
+    std::stack<int> _stack;
+
+    bool isOperator(char c) const;
+    void performOperation(char op);
 };
+
+#endif

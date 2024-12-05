@@ -1,6 +1,6 @@
 FLAGS = -Wall -Wextra -Werror -std=c++98
 
-NAME = RPN
+NAME = rpn
 
 all:
 	@clear
