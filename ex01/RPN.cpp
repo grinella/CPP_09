@@ -60,9 +60,17 @@ int RPN::evaluate(const std::string &expression) {
         } else {
             int value;
             try {
-                value = std::stoi(token);
+                std::istringstream convert(token);
+                if (!(convert >> value)) { // Prova a convertire il token in un numero
+                    throw std::runtime_error("Error: Invalid token \"" + token + "\"");
+                }
+                if (value < 0 || value > 9) { // Controllo che il numero sia tra 0 e 9
+                    throw std::runtime_error("Error: Token \"" + token + "\" is out of range (0-9)");
+                }
+            } catch (const std::runtime_error &e) {
+                throw; // Ri-lancia l'errore con il messaggio già formato
             } catch (...) {
-                throw std::runtime_error("Error: Invalid token");
+                throw std::runtime_error("Error: Unexpected error with token \"" + token + "\"");
             }
             _stack.push(value);
         }
