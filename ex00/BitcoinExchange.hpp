@@ -12,8 +12,11 @@ private:
     float getExchangeRate(const std::string& date) const;
 
 public:
+    // Orthodox Canonical Form
     BitcoinExchange();
     ~BitcoinExchange();
+    BitcoinExchange(const BitcoinExchange& other);
+    BitcoinExchange& operator=(const BitcoinExchange& other);
 
     void loadDatabase(const std::string& databaseFile);
     void evaluate(const std::string& inputFile) const;

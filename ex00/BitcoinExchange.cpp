@@ -9,6 +9,17 @@ BitcoinExchange::BitcoinExchange() {}
 
 BitcoinExchange::~BitcoinExchange() {}
 
+BitcoinExchange::BitcoinExchange(const BitcoinExchange& other) {
+    *this = other;;
+}
+
+BitcoinExchange& BitcoinExchange::operator=(const BitcoinExchange& other) {
+    if (this != &other) {
+        this->_exchangeRates = other._exchangeRates; // Copia lo stato dell' _exchangeRates
+        }
+    return *this;;
+}
+
 void BitcoinExchange::loadDatabase(const std::string& databaseFile) {
     std::ifstream file(databaseFile.c_str());
     if (!file.is_open()) {
